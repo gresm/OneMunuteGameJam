@@ -106,6 +106,16 @@ class ObjectsPool:
     def sort_points(point1: Tuple[float, float], point2: Tuple[float, float]):
         return min(point1, point2), max(point1, point2)
 
+    @classmethod
+    def deserialize(cls, info: Tuple[
+        Dict[Tuple[float, float], bool], Dict[Tuple[float, float], Set[Tuple[float, float]]], Dict[
+            Tuple[Tuple[float, float], Tuple[float, float]], float]]) -> "ObjectsPool":
+        ret = cls()
+        ret._points_dict = info[0]
+        ret._points_reference_dict = info[1]
+        ret._sticks_dict = info[2]
+        return ret
+
     def _make_correct_point(self, pos: Tuple[float, float]) -> Point:
         if pos in self._cached_points:
             return self._cached_points[pos]
@@ -140,6 +150,11 @@ class ObjectsPool:
         for _ in range(times):
             for stick in self.sticks_set:
                 stick.correct_pos()
+
+    def serialize(self) -> Tuple[
+        Dict[Tuple[float, float], bool], Dict[Tuple[float, float], set[Tuple[float, float]]], Dict[
+            Tuple[Tuple[float, float], Tuple[float, float]], float]]:
+        return self._points_dict, self._points_reference_dict, self._sticks_dict
 
     def generate_mesh(self):
         """
@@ -286,9 +301,19 @@ class GravityPool(ObjectsPool):
         return vec
 
 
+class PoolStickIterator:
+    def __init__(self, pool: ObjectsPool):
+        self.pool = pool
+
+    def __iter__(self):
+        for stick in self.pool.sticks_set:
+            yield stick.point1.pos, stick.point2.pos
+
+
 __all__ = [
     "Point",
     "Stick",
     "ObjectsPool",
-    "GravityPool"
+    "GravityPool",
+    "PoolStickIterator"
 ]

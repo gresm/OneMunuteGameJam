@@ -69,6 +69,7 @@ while not done:
                 if ev.unicode == " ":
                     editing = not editing
                     shape.generate_mesh()
+                    print(shape.serialize())
     else:
         for ev in pg.event.get():
             if ev.type == pg.QUIT:

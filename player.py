@@ -1,6 +1,7 @@
-from typing import Iterable, Tuple
-
+from typing import Iterable, Tuple, Union
 import pygame as pg
+
+_POS = Union[Tuple[int, int], pg.Vector2]
 
 
 class Player(pg.sprite.Sprite):
@@ -18,7 +19,7 @@ class Player(pg.sprite.Sprite):
         self.vel = vel if vel else pg.Vector2()
         self.pos = pos
 
-    def collide_with_walls(self, walls: Iterable[Tuple[Tuple[int, int], Tuple[int, int]]]):
+    def collide_with_walls(self, walls: Iterable[Tuple[_POS, _POS]]):
         end_vel = pg.Vector2()
 
         for _ in range(self.iterations):
