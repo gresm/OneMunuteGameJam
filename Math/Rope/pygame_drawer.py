@@ -2,6 +2,7 @@ from .objects import *
 import pygame as pg
 
 DRAW_COLOR = (255, 255, 255)
+GHOST_DRAW_COLOR = (100, 100, 100)
 ANCHORED_POINT_COLOR = (255, 0, 0)
 DRAW_POINT_SIZE = 5
 POINT_DECORATOR_SIZE = 7
@@ -20,7 +21,13 @@ def draw_stick(surf: pg.Surface, line: Stick):
     pg.draw.line(surf, DRAW_COLOR, line.point1.pos, line.point2.pos)
 
 
+def draw_ghost_point(surf, pos: pg.Vector2):
+    pg.draw.circle(surf, GHOST_DRAW_COLOR, pos, DRAW_POINT_SIZE)
+    pg.draw.circle(surf, GHOST_DRAW_COLOR, pos, POINT_DECORATOR_SIZE, width=1)
+
+
 __all__ = [
     "draw_point",
-    "draw_stick"
+    "draw_stick",
+    "draw_ghost_point"
 ]
