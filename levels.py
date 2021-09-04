@@ -1,6 +1,7 @@
 from pathlib import Path
 import json as js
-from typing import Tuple, Dict, Set
+from typing import Tuple, Dict, Set, Union
+from Math import Point
 
 
 class Level:
@@ -8,14 +9,15 @@ class Level:
                  base_shape: Tuple[
                      Dict[Tuple[float, float], bool], Dict[Tuple[float, float], Set[Tuple[float, float]]],
                      Dict[Tuple[Tuple[float, float], Tuple[float, float]], float]],
-                 max_length: float, max_points: int, max_sticks: int, locked_points: Set[Tuple[float, float]]):
+                 max_length: float, max_points: int, max_sticks: int,
+                 locked_points: Set[Union[Tuple[float, float], Point]]):
         self.player_spawn = player_spawn
         self.end_point = end_point
         self.base_shape = base_shape
         self.max_length = max_length
         self.max_points = max_points
         self.max_sticks = max_sticks
-        self.locked_points = locked_points
+        self.locked_points = self._fix_locked_points(locked_points)
 
     @staticmethod
     def _set_to_dict(st: set):
@@ -23,11 +25,28 @@ class Level:
         cnt = 0
         for v in st:
             ret[str(cnt)] = v
+            cnt += 1
+        return ret
+
+    @staticmethod
+    def _fix_locked_points(locked_points: Set[Union[Tuple[float, float], Point]]) -> Set[Tuple[float, float]]:
+        ret = set()
+        for el in locked_points:
+            if isinstance(el, Point):
+                ret.add(tuple(el.pos))
+            else:
+                ret.add(el)
         return ret
 
     @staticmethod
     def _dict_to_set(dc: dict):
-        return set(dc.values())
+        ret = set()
+        for k in dc:
+            if isinstance(dc[k], list):
+                ret.add(tuple(dc[k]))
+            else:
+                ret.add(dc[k])
+        return ret
 
     @classmethod
     def _fix_base_shape(cls, bs):
@@ -46,7 +65,8 @@ class Level:
             sr[tuple((float(e) for e in i.split()))] = cls._dict_to_set(s[i])
 
         for i in t:
-            tr[tuple((float(e) for e in i.split()))] = t[i]
+            sp = tuple((float(e) for e in i.split()))
+            tr[((sp[0], sp[1]), (sp[2], sp[3]))] = t[i]
         return fr, sr, tr
 
     def _get_correct_base_shape(self):
@@ -76,8 +96,8 @@ class Level:
 
     @classmethod
     def deserialize(cls, data: dict):
-        spawn = data["spawn"]
-        end = data["end"]
+        spawn = tuple(data["spawn"])
+        end = tuple(data["end"])
         level = cls._fix_base_shape(data["level"])
         max_length = data["max_length"]
         max_points = data["max_points"]
@@ -91,14 +111,27 @@ def get_path(name: str):
     return Path("Levels") / (name + ".json")
 
 
-def read_level(name: str):
+def read(name: str):
     with open(get_path(name)) as f:
         return f.read()
 
 
-def load_level_json(name: str):
-    return js.loads(read_level(name))
+def write(name: str, level: str):
+    with open(get_path(name), "w") as f:
+        f.write(level)
+
+
+def load_json(name: str):
+    return js.loads(read(name))
+
+
+def save_json(name: str, level):
+    write(name, js.dumps(level))
 
 
 def load_level(name: str):
-    return Level.deserialize(load_level_json(name))
+    return Level.deserialize(load_json(name))
+
+
+def save_level(name: str, level: Level):
+    save_json(name, level.serialize())

@@ -30,10 +30,10 @@ class LevelGenerated:
     def try_place(self, pos: Tuple[float, float], start_pos: Tuple[float, float]):
         if not self.can_place(pos, start_pos):
             return False
-        self.points_count += 1
         r1 = self.pool.add_point(pos, False)
-        r2 = self.pool.add_stick(pos, start_pos)
-        return r1 and r2
+        if r1:
+            self.points_count += 1
+        return self.pool.add_stick(pos, start_pos)
 
     def try_connect(self, pos: Tuple[float, float], start_pos: Tuple[float, float]):
         if not (pg.Vector2(pos) - pg.Vector2(start_pos)).length() < self.max_length:

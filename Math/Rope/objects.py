@@ -36,6 +36,10 @@ class Stick:
     def __repr__(self):
         return f"<Stick({self.point1}, {self.point2})>"
 
+    @property
+    def stick(self):
+        return self.point1.pos, self.point2.pos
+
     def correct_pos(self):
         self.point1.cache_pos()
         self.point2.cache_pos()
