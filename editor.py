@@ -18,11 +18,13 @@ editing = True
 creating_line = False
 first_point = None
 camera_offset = pg.Vector2()
+right = pg.Vector2(1, 0)
+down = pg.Vector2(y=1)
 
 
 def round_tuple(tup: Tuple[int, int]):
-    v1 = tup[0] + 12.5
-    v2 = tup[1] + 12.5
+    v1 = tup[0] + 12.5 - camera_offset.x
+    v2 = tup[1] + 12.5 - camera_offset.y
     return v1 - v1 % 25, v2 - v2 % 25
 
 
@@ -87,13 +89,23 @@ while not done:
                     editing = not editing
                     shape.generate_mesh()
 
+    pressed = pg.key.get_pressed()
+    if pressed[pg.K_UP]:
+        camera_offset -= down * 6
+    if pressed[pg.K_DOWN]:
+        camera_offset += down * 6
+    if pressed[pg.K_LEFT]:
+        camera_offset -= right * 6
+    if pressed[pg.K_RIGHT]:
+        camera_offset += right * 6
+
     display.fill((0, 0, 0))
 
     for stick in shape.sticks_set:
-        draw_stick(display, stick)
+        draw_stick(display, stick, camera_offset)
 
     for point in shape.points_set:
-        draw_point(display, point)
+        draw_point(display, point, camera_offset)
 
     pg.display.update()
     if not editing:
