@@ -3,6 +3,7 @@ from typing import Tuple
 import levels as lv
 import pygame as pg
 from Math import GravityPool
+from player import Player
 
 
 class LevelGenerated:
@@ -10,6 +11,10 @@ class LevelGenerated:
         self.level = level
         self.spawn = pg.Vector2(self.level.player_spawn)
         self.goal = pg.Vector2(self.level.end_point)
+        self.player_rect = pg.Rect(0, 0, 50, 50)
+        self.goal_rect = pg.Rect(self.goal.x, self.goal.y, 50, 50)
+        self.player = Player(self.player_rect, self.spawn)
+        self.player_group = pg.sprite.Group(self.player)
         self.max_points = self.level.max_points
         self.max_sticks = self.level.max_sticks
         self.max_length = self.level.max_length

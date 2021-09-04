@@ -1,3 +1,4 @@
+from builtins import str
 from typing import Dict
 
 import pygame as pg
@@ -15,9 +16,11 @@ clock = pg.time.Clock()
 progress = "main_menu"
 current_menu = 0
 timer = 0
+seconds_timer = 0
 levels = 9
 menu = True
 timer_running = False
+building = True
 option_selecting = 0
 mouse_rect = pg.Rect(0, 0, 50, 50)
 
@@ -176,6 +179,16 @@ while not done:
 
     else:
         pass
+
+    if timer_running:
+        seconds_timer += 1
+        if seconds_timer > 60:
+            timer += 1
+            seconds_timer = 0
+        timer_surf = small_font.render("time left: " + str(60-timer), False,
+                                       (255, 255, 255) if 60-timer > 10 or timer % 2 else (255, 0, 0))
+        timer_rect = timer_surf.get_rect(topright=(550, 50))
+        display.blit(timer_surf, timer_rect)
 
     pg.display.update()
 
