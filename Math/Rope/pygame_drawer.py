@@ -8,22 +8,25 @@ DRAW_POINT_SIZE = 5
 POINT_DECORATOR_SIZE = 7
 
 
-def draw_point(surf: pg.Surface, point: Point):
+def draw_point(surf: pg.Surface, point: Point, offset: pg.Vector2 = None):
+    offset = offset if offset else pg.Vector2()
     if point.anchored:
-        pg.draw.circle(surf, ANCHORED_POINT_COLOR, point.pos, DRAW_POINT_SIZE)
-        pg.draw.circle(surf, DRAW_COLOR, point.pos, POINT_DECORATOR_SIZE, width=1)
+        pg.draw.circle(surf, ANCHORED_POINT_COLOR, point.pos+offset, DRAW_POINT_SIZE)
+        pg.draw.circle(surf, DRAW_COLOR, point.pos+offset, POINT_DECORATOR_SIZE, width=1)
     else:
-        pg.draw.circle(surf, DRAW_COLOR, point.pos, DRAW_POINT_SIZE)
-        pg.draw.circle(surf, DRAW_COLOR, point.pos, POINT_DECORATOR_SIZE, width=1)
+        pg.draw.circle(surf, DRAW_COLOR, point.pos+offset, DRAW_POINT_SIZE)
+        pg.draw.circle(surf, DRAW_COLOR, point.pos+offset, POINT_DECORATOR_SIZE, width=1)
 
 
-def draw_stick(surf: pg.Surface, line: Stick):
-    pg.draw.line(surf, DRAW_COLOR, line.point1.pos, line.point2.pos)
+def draw_stick(surf: pg.Surface, line: Stick, offset: pg.Vector2 = None):
+    offset = offset if offset else pg.Vector2()
+    pg.draw.line(surf, DRAW_COLOR, line.point1.pos+offset, line.point2.pos+offset)
 
 
-def draw_ghost_point(surf, pos: pg.Vector2):
-    pg.draw.circle(surf, GHOST_DRAW_COLOR, pos, DRAW_POINT_SIZE)
-    pg.draw.circle(surf, GHOST_DRAW_COLOR, pos, POINT_DECORATOR_SIZE, width=1)
+def draw_ghost_point(surf, pos: pg.Vector2, offset: pg.Vector2 = None):
+    offset = offset if offset else pg.Vector2()
+    pg.draw.circle(surf, GHOST_DRAW_COLOR, pos+offset, DRAW_POINT_SIZE)
+    pg.draw.circle(surf, GHOST_DRAW_COLOR, pos+offset, POINT_DECORATOR_SIZE, width=1)
 
 
 __all__ = [

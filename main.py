@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pygame as pg
 
 from Math import draw_stick, draw_point
@@ -13,7 +15,7 @@ clock = pg.time.Clock()
 progress = "main_menu"
 current_menu = 0
 timer = 0
-levels = 10
+levels = 9
 menu = True
 timer_running = False
 option_selecting = 0
@@ -26,7 +28,10 @@ font = pg.font.SysFont("", 45)
 solved_levels = load_json("solved_levels")
 
 if not solved_levels:
-    solved_levels = {v: False for v in range(0, 10)}
+    solved_levels = {str(v): False for v in range(9)}
+current_level_index = 0
+
+level_selection: Dict[int, pg.Rect] = {}
 
 
 def get_level(name: str):
@@ -46,12 +51,18 @@ while not done:
                     if option_selecting == 1:
                         menu = False
                         progress = "0"
+                        get_level(f"level_{current_level_index}")
                     elif option_selecting == 2:
                         current_menu = 1
                         progress = "settings_menu"
                         level = get_level(f"level_{progress}")
                     elif option_selecting == 3:
                         done = True
+                elif current_menu == 1:
+                    if 0 < option_selecting <= levels:
+                        current_level_index = option_selecting
+                        level = get_level(f"level_{option_selecting}")
+                        menu = False
 
     level.pool.emulate(10)
 
@@ -127,6 +138,34 @@ while not done:
             elif quit_rect.collidepoint(pos):
                 option_selecting = 3
                 pg.draw.rect(display, (255, 255, 255), quit_rect, 5)
+        elif current_menu == 1:
+            option_selecting = 0
+            title_surf = pg.transform.scale2x(small_font.render("WEAK BRIDGES", False, (255, 255, 255)))
+            title_rect = title_surf.get_rect()
+            title_rect.center = (300, 150)
+            display.blit(title_surf, title_rect)
+
+            title_surf = small_font.render("SELECT LEVEL", False, (255, 255, 255))
+            title_rect = title_surf.get_rect()
+            title_rect.center = (300, 200)
+            display.blit(title_surf, title_rect)
+
+            cnt = 0
+            for x in range(3):
+                for y in range(3):
+                    rect = pg.Rect(0, 0, 40, 40)
+                    rect.center = 250 + x * 50, 250 + y * 50
+                    pg.draw.rect(display, (255, 255, 255), rect, 4)
+                    past_solved = not (str(cnt - 1) in solved_levels and not solved_levels[str(cnt - 1)])
+                    lev_num = small_font.render(str(cnt+1) if past_solved else "X", False, (255, 255, 255))
+                    lev_num_rect = lev_num.get_rect()
+                    lev_num_rect.center = rect.center
+                    level_selection[cnt] = rect
+                    display.blit(lev_num, lev_num_rect)
+                    cnt += 1
+
+                    if past_solved and rect.collidepoint(pg.mouse.get_pos()):
+                        option_selecting = cnt
 
         for point in level.pool.points_set:
             if point.anchored:

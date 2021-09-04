@@ -17,6 +17,7 @@ editing = True
 
 creating_line = False
 first_point = None
+camera_offset = pg.Vector2()
 
 
 def round_tuple(tup: Tuple[int, int]):
