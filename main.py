@@ -41,6 +41,31 @@ def get_level(name: str):
     return LevelGenerated(load_level(name))
 
 
+current_difficulty = 0
+# 0 - menu
+# 1 - easy
+# 2 - normal
+# 3 - hard
+# 4 - impossible
+
+
+difficulty_info = {
+    0: (10, "menu"),
+    1: (50, "easy"),
+    2: (25, "normal"),
+    3: (10, "hard"),
+    4: (5, "impossible")
+}
+
+
+def get_difficulty_operation_steps():
+    return difficulty_info[current_difficulty][0]
+
+
+def get_difficulty_name(diff: int):
+    return difficulty_info[diff][1]
+
+
 level = get_level(f"level_{progress}")
 
 
@@ -59,6 +84,7 @@ while not done:
                         current_menu = 1
                         progress = "settings_menu"
                         level = get_level(f"level_{progress}")
+                        current_difficulty = 1
                     elif option_selecting == 3:
                         done = True
                 elif current_menu == 1:
@@ -66,36 +92,40 @@ while not done:
                         current_level_index = option_selecting
                         level = get_level(f"level_{option_selecting}")
                         menu = False
+                    elif option_selecting == -1:
+                        current_difficulty = current_difficulty % 4
+                        current_difficulty += 1
 
-    level.pool.emulate(10)
+    level.pool.emulate(get_difficulty_operation_steps())
 
-    for _ in range(10):
-        for stick in level.pool.sticks_set:
-            clipped = mouse_rect.clipline(stick.stick)
-            if not clipped:
-                continue
-            p1 = pg.Vector2(clipped[0])
-            p2 = pg.Vector2(clipped[1])
-            c = pg.Vector2(mouse_rect.center)
-            dff1 = c - p1
-            dff2 = c - p2
-            len1 = dff1.length()
-            len2 = dff2.length()
+    if menu:
+        for _ in range(get_difficulty_operation_steps()):
+            for stick in level.pool.sticks_set:
+                clipped = mouse_rect.clipline(stick.stick)
+                if not clipped:
+                    continue
+                p1 = pg.Vector2(clipped[0])
+                p2 = pg.Vector2(clipped[1])
+                c = pg.Vector2(mouse_rect.center)
+                dff1 = c - p1
+                dff2 = c - p2
+                len1 = dff1.length()
+                len2 = dff2.length()
 
-            if len1:
-                nor1 = dff1 / len1
-            else:
-                nor1 = pg.Vector2()
+                if len1:
+                    nor1 = dff1 / len1
+                else:
+                    nor1 = pg.Vector2()
 
-            if len2:
-                nor2 = dff2 / len2
-            else:
-                nor2 = pg.Vector2()
+                if len2:
+                    nor2 = dff2 / len2
+                else:
+                    nor2 = pg.Vector2()
 
-            if not stick.point1.anchored:
-                stick.point1.pos -= nor1
-            if not stick.point2.anchored:
-                stick.point2.pos -= nor2
+                if not stick.point1.anchored:
+                    stick.point1.pos -= nor1
+                if not stick.point2.anchored:
+                    stick.point2.pos -= nor2
 
     level.pool.emulate(10)
 
@@ -170,6 +200,19 @@ while not done:
                     if past_solved and rect.collidepoint(pg.mouse.get_pos()):
                         option_selecting = cnt
 
+            difficulty_surf = small_font.render("DIFFICULTY", False, (255, 255, 255))
+            difficulty_rect = difficulty_surf.get_rect()
+            difficulty_rect.center = (310, 400)
+            display.blit(difficulty_surf, difficulty_rect)
+
+            difficulty_surf = font.render(get_difficulty_name(current_difficulty), False, (255, 255, 255))
+            difficulty_rect = difficulty_surf.get_rect()
+            difficulty_rect.center = (300, 450)
+            pg.draw.rect(display, (255, 255, 255), difficulty_rect, 4)
+            display.blit(difficulty_surf, difficulty_rect)
+            if difficulty_rect.collidepoint(pg.mouse.get_pos()):
+                option_selecting = -1
+
         for point in level.pool.points_set:
             if point.anchored:
                 draw_point(display, point)
@@ -178,17 +221,15 @@ while not done:
             draw_stick(display, stick)
 
     else:
-        pass
-
-    if timer_running:
-        seconds_timer += 1
-        if seconds_timer > 60:
-            timer += 1
-            seconds_timer = 0
-        timer_surf = small_font.render("time left: " + str(60-timer), False,
-                                       (255, 255, 255) if 60-timer > 10 or timer % 2 else (255, 0, 0))
-        timer_rect = timer_surf.get_rect(topright=(550, 50))
-        display.blit(timer_surf, timer_rect)
+        if timer_running:
+            seconds_timer += 1
+            if seconds_timer > 60:
+                timer += 1
+                seconds_timer = 0
+            timer_surf = small_font.render("time left: " + str(60-timer), False,
+                                           (255, 255, 255) if 60-timer > 10 or timer % 2 else (255, 0, 0))
+            timer_rect = timer_surf.get_rect(topright=(550, 50))
+            display.blit(timer_surf, timer_rect)
 
     pg.display.update()
 
