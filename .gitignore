@@ -130,3 +130,7 @@ dmypy.json
 
 # Pycharm editor
 .idea/
+
+
+# project tmp files
+Levels/solved_levels.json
