@@ -1,8 +1,9 @@
 from typing import Tuple
+import sys
 
 import pygame as pg
 from Math import GravityPool, draw_stick, draw_point, draw_kill_stick, draw_kill_point
-from levels import Level, save_level
+from levels import Level, save_level, load_level
 
 shape = GravityPool()
 kill_shape = GravityPool()
@@ -29,6 +30,20 @@ def round_tuple(tup: Tuple[int, int]):
     v1 = tup[0] + 12.5 + camera_offset.x
     v2 = tup[1] + 12.5 + camera_offset.y
     return v1 - v1 % 25, v2 - v2 % 25
+
+
+def get_level(name: str):
+    global shape, kill_shape
+    loaded_level = load_level(name)
+    shape = GravityPool.deserialize(loaded_level.base_shape)
+    shape.generate_mesh()
+
+    kill_shape = GravityPool.deserialize(loaded_level.kill_shape)
+    kill_shape.generate_mesh()
+
+
+if len(sys.argv) > 1:
+    get_level(sys.argv[1])
 
 
 while not done:
@@ -95,7 +110,7 @@ while not done:
                     drawing_death = not drawing_death
                 elif ev.unicode == "s":
                     pg.quit()
-                    name = input("level name: ")
+                    level_name = input("level name: ")
                     player_x = int(input("player x: "))
                     player_y = int(input("player y: "))
                     exit_x = int(input("goal x: "))
@@ -106,7 +121,7 @@ while not done:
                     kill_shape.generate_mesh()
                     level = Level((player_x, player_y), (exit_x, exit_y), shape.serialize(), max_length, max_points,
                                   -1, shape.points_set, kill_shape.serialize())
-                    save_level(name, level)
+                    save_level(level_name, level)
                     done = True
                     quit()
     else:
