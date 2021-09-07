@@ -10,7 +10,11 @@ class Level:
                      Dict[Tuple[float, float], bool], Dict[Tuple[float, float], Set[Tuple[float, float]]],
                      Dict[Tuple[Tuple[float, float], Tuple[float, float]], float]],
                  max_length: float, max_points: int, max_sticks: int,
-                 locked_points: Set[Union[Tuple[float, float], Point]]):
+                 locked_points: Set[Union[Tuple[float, float], Point]],
+                 kill_shape: Tuple[
+                     Dict[Tuple[float, float], bool], Dict[Tuple[float, float], Set[Tuple[float, float]]],
+                     Dict[Tuple[Tuple[float, float], Tuple[float, float]], float]] = ({}, {}, {}),
+                 ):
         self.player_spawn = player_spawn
         self.end_point = end_point
         self.base_shape = base_shape
@@ -18,6 +22,7 @@ class Level:
         self.max_points = max_points
         self.max_sticks = max_sticks
         self.locked_points = self._fix_locked_points(locked_points)
+        self.kill_shape = kill_shape
 
     @staticmethod
     def _set_to_dict(st: set):
@@ -49,7 +54,7 @@ class Level:
         return ret
 
     @classmethod
-    def _fix_base_shape(cls, bs):
+    def _fix_shape(cls, bs):
         f: Dict[str, bool] = bs[0]
         s: Dict[str, Dict[str, Tuple[int, int]]] = bs[1]
         t: Dict[str, float] = bs[2]
@@ -69,7 +74,28 @@ class Level:
             tr[((sp[0], sp[1]), (sp[2], sp[3]))] = t[i]
         return fr, sr, tr
 
-    def _get_correct_base_shape(self):
+    @classmethod
+    def _get_correct_shape(cls, sh):
+        f = sh[0]
+        s = sh[1]
+        t = sh[2]
+
+        fr: dict = {}
+        sr = {}
+        tr = {}
+
+        for i in f:
+            fr[f"{i[0]} {i[1]}"] = f[i]
+
+        for i in s:
+            sr[f"{i[0]} {i[1]}"] = cls._set_to_dict(s[i])
+
+        for i in t:
+            tr[f"{i[0][0]} {i[0][1]} {i[1][0]} {i[1][1]}"] = t[i]
+
+        return fr, sr, tr
+
+    def _get_correct_kill_shape(self):
         f = self.base_shape[0]
         s = self.base_shape[1]
         t = self.base_shape[2]
@@ -90,21 +116,24 @@ class Level:
         return fr, sr, tr
 
     def serialize(self):
-        return {"spawn": self.player_spawn, "end": self.end_point, "level": self._get_correct_base_shape(),
+        return {"spawn": self.player_spawn, "end": self.end_point, "level": self._get_correct_shape(self.base_shape),
                 "max_length": self.max_length, "max_points": self.max_points, "max_sticks": self.max_sticks,
-                "locked_points": self._set_to_dict(self.locked_points)}
+                "locked_points": self._set_to_dict(self.locked_points),
+                "kill": self._get_correct_shape(self.kill_shape)}
 
     @classmethod
     def deserialize(cls, data: dict):
         spawn = tuple(data["spawn"])
         end = tuple(data["end"])
-        level = cls._fix_base_shape(data["level"])
+        level = cls._fix_shape(data["level"])
         max_length = data["max_length"]
         max_points = data["max_points"]
         max_sticks = data["max_sticks"]
         locked_points = cls._dict_to_set(data["locked_points"])
+        kill = data["kill"] if "kill" in data else ({}, {}, {})
+        kill = cls._fix_shape(kill)
         # noinspection PyTypeChecker
-        return cls(spawn, end, level, max_length, max_points, max_sticks, locked_points)
+        return cls(spawn, end, level, max_length, max_points, max_sticks, locked_points, kill)
 
 
 def get_path(name: str):

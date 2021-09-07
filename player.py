@@ -9,6 +9,7 @@ class Player(pg.sprite.Sprite):
     floor_angular_drag = 0.98
     gravity = pg.Vector2(y=1)
     iterations = 5
+    max_movement = 5
 
     def __init__(self, rect: pg.Rect, pos: pg.Vector2, vel: pg.Vector2 = None):
         super().__init__()
@@ -18,9 +19,18 @@ class Player(pg.sprite.Sprite):
         pg.draw.rect(self.image, (255, 255, 255), self.rect, 1)
         self.vel = vel if vel else pg.Vector2()
         self.pos = pos
+        self.on_ground = False
+
+    def _clamp_vel(self, vel: pg.Vector2):
+        vl = vel.length()
+        if vl <= self.max_movement:
+            return vel
+        ser = vel / vl
+        return ser * self.max_movement
 
     def collide_with_walls(self, walls: Iterable[Tuple[_POS, _POS]]):
         end_vel = pg.Vector2()
+        end_pos = pg.Vector2()
 
         for _ in range(self.iterations):
             # noinspection PyShadowingNames
@@ -28,6 +38,7 @@ class Player(pg.sprite.Sprite):
                 clipped = self.rect.clipline(line)
                 if not clipped:  # colliding with nothing
                     continue
+                self.on_ground = True
 
                 first_diff = self.pos - pg.Vector2(clipped[0])
                 second_diff = self.pos - pg.Vector2(clipped[1])
@@ -39,20 +50,24 @@ class Player(pg.sprite.Sprite):
 
                 fixed_serialized = fixed_diff / 5
 
-                self.pos += fixed_serialized
+                end_pos += fixed_serialized
                 end_vel += fixed_serialized
+                end_vel -= pg.Vector2(y=10)
                 end_vel *= self.floor_angular_drag
+                self.rect.center = self.pos + end_pos
 
-                self.rect.center = self.pos
-                self.vel += end_vel
+        self.vel += end_vel
+        self.pos += end_pos
 
     def update(self, *args, **kwargs) -> None:
+        if "walls" in kwargs:
+            self.on_ground = False
+            self.collide_with_walls(kwargs["walls"])
+
         self.pos += self.vel
         self.rect.center = self.pos
         self.vel *= self.angular_drag
-
-        if "walls" in kwargs:
-            self.collide_with_walls(kwargs["walls"])
-
         self.rect.center = self.pos
+
         self.vel += self.gravity
+        self.vel = self._clamp_vel(self.vel)

@@ -1,36 +1,90 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 import levels as lv
 import pygame as pg
-from Math import GravityPool
+from Math import GravityPool, PoolStickIterator, drawer
 from player import Player
 
 
-class LevelGenerated:
-    def __init__(self, level: lv.Level):
+class LevelGenerated(pg.sprite.Sprite):
+    def __init__(self, level: lv.Level, image: pg.Surface, operation_steps: int):
+        super().__init__()
+        self._image = image
+        self.rect = self._image.get_rect()
+
         self.level = level
         self.spawn = pg.Vector2(self.level.player_spawn)
         self.goal = pg.Vector2(self.level.end_point)
         self.player_rect = pg.Rect(0, 0, 50, 50)
+        self.winning_rect = pg.Rect(0, 0, 50, 50)
+        self.winning_rect.center = self.goal
         self.goal_rect = pg.Rect(self.goal.x, self.goal.y, 50, 50)
         self.player = Player(self.player_rect, self.spawn)
+        self.player_rect.center = self.player.pos
         self.player_group = pg.sprite.Group(self.player)
         self.max_points = self.level.max_points
         self.max_sticks = self.level.max_sticks
         self.max_length = self.level.max_length
         self.pool = GravityPool.deserialize(self.level.base_shape)
+        self.kill = GravityPool.deserialize(self.level.kill_shape)
 
         self.pool.generate_mesh()
+        self.kill.generate_mesh()
 
         self.points_count = 0
+        self.building = True
+        self.camera = pg.Vector2()
+        self.operation_steps: int = operation_steps
+        self.selecting: Optional[pg.Vector2] = None
+
+    def _draw_on_surf(self, surf: pg.Surface, offset: pg.Vector2):
+        if self.building:
+            if self.selecting:
+                pg.draw.circle(surf, (255, 255, 255), self.selecting, 10, 3)
+        pg.draw.rect(surf, (255, 255, 255), self.player_rect, 3)
+        pg.draw.rect(surf, (255, 255, 0), self.winning_rect, 3)
+        for point in self.pool.points_set:
+            if self.building or point.anchored:
+                drawer.draw_point(surf, point, offset)
+
+        for stick in self.pool.sticks_set:
+            drawer.draw_stick(surf, stick, offset)
+
+        for kill_point in self.kill.points_set:
+            drawer.draw_kill_point(surf, kill_point, offset)
+
+        for kill_stick in self.kill.sticks_set:
+            drawer.draw_kill_stick(surf, kill_stick, offset)
+
+    @property
+    def image(self):
+        img = self._image.copy()
+        self._draw_on_surf(img, self.camera)
+        return img
+
+    def update(self, *args, **kwargs) -> None:
+        if "setting_steps" in kwargs and kwargs["setting_steps"]:
+            if "steps" in kwargs:
+                self.operation_steps = kwargs["steps"]
+        else:
+            self.pool.emulate(self.operation_steps)
+            self.kill.emulate(self.operation_steps)
+            self.player.update(walls=PoolStickIterator(self.pool))
 
     def restart(self):
         self.pool.generate_mesh()
         self.points_count = 0
+        self.respawn_player()
+
+    def respawn_player(self):
+        self.player.kill()
+        self.player = Player(self.player_rect, self.spawn)
+        self.player_group.add(self.player)
 
     def can_place(self, pos: Tuple[float, float], start_pos: Tuple[float, float]):
-        return self.pool.point_exist(start_pos) and self.points_count > 0 and \
+        ret = self.pool.point_exist(start_pos) and self.points_count < self.max_points and \
                (pg.Vector2(pos) - pg.Vector2(start_pos)).length() < self.max_length
+        return ret
 
     def try_place(self, pos: Tuple[float, float], start_pos: Tuple[float, float]):
         if not self.can_place(pos, start_pos):
@@ -44,3 +98,71 @@ class LevelGenerated:
         if not (pg.Vector2(pos) - pg.Vector2(start_pos)).length() < self.max_length:
             return False
         return self.pool.add_stick(pos, start_pos)
+
+    def try_remove(self, pos: Tuple[float, float]):
+        if pos in self.level.locked_points or not self.pool.point_exist(pos):
+            return False
+
+        ret = self.pool.del_point(pos)
+        if ret:
+            self.points_count -= 1
+        return ret
+
+    def place(self, pos: Tuple[float, float]):
+        ret = self.try_place(pos, tuple(self.selecting))
+        self.pool.generate_mesh()
+        return ret
+
+    def connect(self, pos: Tuple[float, float]):
+        ret = self.try_connect(pos, tuple(self.selecting))
+        self.pool.generate_mesh()
+        return ret
+
+    def remove_point(self, pos: Tuple[float, float]):
+        ret = self.try_remove(pos)
+        self.pool.generate_mesh()
+        return ret
+
+    def is_winning(self):
+        return self.player_rect.colliderect(self.winning_rect)
+
+    def is_loosing(self):
+        for line in PoolStickIterator(self.kill):
+            if self.player_rect.clipline(line):
+                return True
+        return False
+
+    def correct_placement_pos(self, pos: pg.Vector2):
+        dff = pos - self.selecting
+        siz = dff.length()
+        if siz > self.max_length:
+            ser = dff / siz
+            corr = ser * self.max_length
+            return self.selecting + corr
+        return pos
+
+    def select(self, pos: pg.Vector2, button: int):
+        if button == 1:
+            # left button
+            if self.selecting is None:
+                if self.pool.point_exist(tuple(pos)):
+                    self.selecting = pos
+            else:
+                if self.pool.point_exist(tuple(pos)):
+                    if self.connect(tuple(pos)):
+                        self.selecting = pos
+                else:
+                    if self.place(tuple(pos)):
+                        self.selecting = pos
+        elif button == 2:
+            # middle button
+            if self.pool.point_exist(tuple(pos)):
+                self.remove_point(tuple(pos))
+                if pos == self.selecting:
+                    self.selecting = None
+        elif button == 3:
+            # right button
+            if self.pool.point_exist(tuple(pos)):
+                self.selecting = pos
+            else:
+                self.selecting = None

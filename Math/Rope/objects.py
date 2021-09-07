@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Set
+from typing import Dict, Tuple, Set, Union
 
 import pygame as pg
 
@@ -25,7 +25,9 @@ class Point:
 
 
 class Stick:
-    def __init__(self, point1: Point, point2: Point, length: float):
+    def __init__(self, point1: Point, point2: Point, length: float = None):
+        if length is None:
+            length = (point2.pos - point1.pos).length()
         self.point1 = point1
         self.point2 = point2
         self.length = length
@@ -274,6 +276,12 @@ class ObjectsPool:
             pass
 
         return True
+
+    def add_tmp_point(self, pos: Union[Tuple[float, float], pg.Vector2], anchored: bool):
+        self.points_set.add(Point(pg.Vector2(pos), anchored))
+
+    def add_tmp_line(self, p1: Point, p2: Point):
+        self.sticks_set.add(Stick(p1, p2))
 
     def point_exist(self, pos: Tuple[float, float]):
         return pos in self._points_dict
