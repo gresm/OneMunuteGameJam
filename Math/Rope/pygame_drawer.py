@@ -33,7 +33,7 @@ def draw_kill_point(surf: pg.Surface, point, offset=None):
     offset = offset if offset else pg.Vector2()
     if point.anchored:
         pg.draw.circle(surf, ANCHORED_POINT_COLOR, point.pos - offset, DRAW_POINT_SIZE)
-    pg.draw.circle(surf, ANCHORED_POINT_COLOR, point.pos - offset, POINT_DECORATOR_SIZE)
+    pg.draw.circle(surf, ANCHORED_POINT_COLOR, point.pos - offset, POINT_DECORATOR_SIZE, width=1)
 
 
 def draw_kill_stick(surf, stick, offset=None):
