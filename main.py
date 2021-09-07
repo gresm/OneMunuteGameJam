@@ -21,7 +21,6 @@ menu = True
 timer_running = False
 option_selecting = 0
 mouse_rect = pg.Rect(0, 0, 50, 50)
-points_grid = 25
 right = pg.Vector2(1, 0)
 down = pg.Vector2(0, 1)
 
@@ -52,14 +51,14 @@ level: LevelGenerated = ...
 level_group = pg.sprite.Group()
 
 
-def get_level(name: str):
-    return LevelGenerated(load_level(name), display, get_difficulty_operation_steps())
+def get_level(name: str, static_camera: bool = False):
+    return LevelGenerated(load_level(name), display, get_difficulty_operation_steps(), static_camera)
 
 
-def set_level(name: str):
+def set_level(name: str, static_camera: bool = False):
     global level
     level_group.empty()
-    level = get_level(name)
+    level = get_level(name, static_camera)
     level_group.add(level)
 
 
@@ -102,11 +101,6 @@ def restart_timer():
     timer_running = True
 
 
-def round_pos(vec: pg.Vector2):
-    v = vec + pg.Vector2(points_grid / 2)
-    return v - pg.Vector2(v.x % points_grid, v.y % points_grid)
-
-
 def times_up():
     pass
 
@@ -127,7 +121,7 @@ def next_level():
         set_level(f"level_{current_level_index}")
 
 
-set_level(f"level_{progress}")
+set_level(f"level_{progress}", True)
 
 try:
     while not done:
@@ -159,7 +153,7 @@ try:
                             current_menu = 1
                             progress = "settings_menu"
                             current_difficulty = 1
-                            set_level(f"level_{progress}")
+                            set_level(f"level_{progress}", True)
                         elif option_selecting == 3:
                             done = True
                     elif current_menu == 1:
@@ -174,7 +168,7 @@ try:
                             level_group.update(setting_steps=True, steps=get_difficulty_operation_steps())
             elif ev.type == pg.MOUSEBUTTONDOWN:
                 if not menu and level.building:
-                    level.select(round_pos(pg.Vector2(ev.pos)), ev.button)
+                    level.interact(pg.Vector2(ev.pos), ev.button)
 
         if menu or not level.building:
             level_group.update()
@@ -307,12 +301,21 @@ try:
 
             if not level.building:
                 if pressed[pg.K_LEFT]:
-                    level.player.vel -= right * 5
+                    level.player.vel -= right * 3
                 if pressed[pg.K_RIGHT]:
-                    level.player.vel += right * 5
+                    level.player.vel += right * 3
                 if pressed[pg.K_UP]:
                     if level.player.on_ground:
-                        level.player.vel -= down * 10
+                        level.player.vel -= down * 20
+            else:
+                if pressed[pg.K_UP]:
+                    level.camera -= down * 6
+                if pressed[pg.K_DOWN]:
+                    level.camera += down * 6
+                if pressed[pg.K_LEFT]:
+                    level.camera -= right * 6
+                if pressed[pg.K_RIGHT]:
+                    level.camera += right * 6
 
             if timer > 60:
                 set_level(f"level_{current_level_index}")

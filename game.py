@@ -5,9 +5,19 @@ import pygame as pg
 from Math import GravityPool, PoolStickIterator, drawer
 from player import Player
 
+points_grid = 25
+
+
+def round_pos(vec: pg.Vector2):
+    v = vec + pg.Vector2(points_grid / 2)
+    return v - pg.Vector2(v.x % points_grid, v.y % points_grid)
+
 
 class LevelGenerated(pg.sprite.Sprite):
-    def __init__(self, level: lv.Level, image: pg.Surface, operation_steps: int):
+    camera_speed = 0.05
+
+    def __init__(self, level: lv.Level, image: pg.Surface, operation_steps: int, static_camera: bool = False,
+                 player_follow_camera_size: int = 100):
         super().__init__()
         self._image = image
         self.rect = self._image.get_rect()
@@ -33,16 +43,29 @@ class LevelGenerated(pg.sprite.Sprite):
 
         self.points_count = 0
         self.building = True
+
         self.camera = pg.Vector2()
+        self.static_camera = static_camera
+        self.player_follow_camera_size = player_follow_camera_size
+        self.camera_box = pg.Rect(player_follow_camera_size, player_follow_camera_size,
+                                  self.rect.width - player_follow_camera_size * 2,
+                                  self.rect.height - player_follow_camera_size * 2)
+
         self.operation_steps: int = operation_steps
         self.selecting: Optional[pg.Vector2] = None
 
     def _draw_on_surf(self, surf: pg.Surface, offset: pg.Vector2):
         if self.building:
             if self.selecting:
-                pg.draw.circle(surf, (255, 255, 255), self.selecting, 10, 3)
-        pg.draw.rect(surf, (255, 255, 255), self.player_rect, 3)
-        pg.draw.rect(surf, (255, 255, 0), self.winning_rect, 3)
+                pg.draw.circle(surf, (255, 255, 255), self.selecting - self.camera, 10, 3)
+        pl_rect = self.player_rect.copy()
+        pl_rect.center = pg.Vector2(pl_rect.center) - offset
+
+        wn_rect = self.winning_rect.copy()
+        wn_rect.center = pg.Vector2(wn_rect.center) - offset
+
+        pg.draw.rect(surf, (255, 255, 255), pl_rect, 3)
+        pg.draw.rect(surf, (255, 255, 0), wn_rect, 3)
         for point in self.pool.points_set:
             if self.building or point.anchored:
                 drawer.draw_point(surf, point, offset)
@@ -67,9 +90,24 @@ class LevelGenerated(pg.sprite.Sprite):
             if "steps" in kwargs:
                 self.operation_steps = kwargs["steps"]
         else:
+            self.update_camera()
             self.pool.emulate(self.operation_steps)
             self.kill.emulate(self.operation_steps)
             self.player.update(walls=PoolStickIterator(self.pool))
+
+    def update_camera(self):
+        if self.static_camera:
+            return
+
+        relative_pos = self.player.pos - self.camera
+        player_rect = self.player_rect.copy()
+        player_rect.center = relative_pos
+
+        if self.camera_box.contains(player_rect):
+            return
+
+        way = self.player.pos - self.camera - pg.Vector2(self.camera_box.center)
+        self.camera += way * self.camera_speed
 
     def restart(self):
         self.pool.generate_mesh()
@@ -166,3 +204,6 @@ class LevelGenerated(pg.sprite.Sprite):
                 self.selecting = pos
             else:
                 self.selecting = None
+
+    def interact(self, pos: pg.Vector2, button: int):
+        self.select(round_pos(self.camera + pos), button)
