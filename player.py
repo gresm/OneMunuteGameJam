@@ -8,8 +8,8 @@ class Player(pg.sprite.Sprite):
     angular_drag = 0.99
     floor_angular_drag = 0.98
     gravity = pg.Vector2(y=1)
-    iterations = 5
-    max_movement = 5
+    iterations = 10
+    max_movement = 3
 
     def __init__(self, rect: pg.Rect, pos: pg.Vector2, vel: pg.Vector2 = None):
         super().__init__()
@@ -40,8 +40,8 @@ class Player(pg.sprite.Sprite):
                     continue
                 self.on_ground = True
 
-                first_diff = self.pos - pg.Vector2(clipped[0])
-                second_diff = self.pos - pg.Vector2(clipped[1])
+                first_diff = self.pos + end_pos - pg.Vector2(clipped[0])
+                second_diff = self.pos + end_pos - pg.Vector2(clipped[1])
                 fixed_diff = first_diff + second_diff
                 fixed_len = fixed_diff.length()
 
@@ -57,7 +57,6 @@ class Player(pg.sprite.Sprite):
                 self.rect.center = self.pos + end_pos
 
         self.vel += end_vel
-        self.pos += end_pos
 
     def update(self, *args, **kwargs) -> None:
         if "walls" in kwargs:

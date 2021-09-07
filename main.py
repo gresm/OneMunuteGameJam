@@ -115,6 +115,18 @@ def killed():
     pass
 
 
+def next_level():
+    global current_level_index, menu, current_menu
+    solved_levels[str(current_level_index)] = True
+    save_json("solved_levels", solved_levels)
+    current_level_index += 1
+    if levels >= current_level_index:
+        menu = True
+        current_menu = 0
+    else:
+        set_level(f"level_{current_level_index}")
+
+
 set_level(f"level_{progress}")
 
 try:
@@ -130,6 +142,9 @@ try:
                     if not menu:
                         set_level(f"level_{current_level_index}")
                         start_level()
+                elif ev.key == pg.K_ESCAPE or ev.unicode == "q":
+                    if not menu:
+                        menu = True
 
             elif ev.type == pg.MOUSEBUTTONUP:
                 if menu:
@@ -325,6 +340,12 @@ try:
                 title_rect = title_surf.get_rect(center=(300, 100))
                 if level.building:
                     display.blit(title_surf, title_rect)
+
+                if level.is_winning():
+                    next_level()
+                elif level.is_loosing():
+                    set_level(f"level_{current_level_index}")
+                    start_level()
 
         pg.display.update()
 
