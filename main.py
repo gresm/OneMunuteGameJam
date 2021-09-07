@@ -39,12 +39,12 @@ level_names = {
     1: "level 1: short floating bridge",
     2: "level 2: long bridge",
     3: "level 3: giant bridge",
-    4: "level 4: save the point",
-    5: "level 5: introducing death",
-    6: "level 6: maze",
-    7: "level 7: falling meteors",
-    8: "level 8: tall climb",
-    9: "level 9: parkour"
+    4: "level 4: introducing death",
+    5: "level 5: maze",
+    6: "level 6: falling meteors",
+    7: "level 7: tall climb",
+    8: "level 8: parkour",
+    9: "level 9: boss fight"
 }
 
 level: LevelGenerated = ...
