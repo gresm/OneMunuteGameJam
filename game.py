@@ -171,6 +171,8 @@ class LevelGenerated(pg.sprite.Sprite):
         return False
 
     def correct_placement_pos(self, pos: pg.Vector2):
+        if self.selecting is None:
+            return pos
         dff = pos - self.selecting
         siz = dff.length()
         if siz > self.max_length:
@@ -206,4 +208,4 @@ class LevelGenerated(pg.sprite.Sprite):
                 self.selecting = None
 
     def interact(self, pos: pg.Vector2, button: int):
-        self.select(round_pos(self.camera + pos), button)
+        self.select(round_pos(self.correct_placement_pos(self.camera + pos)), button)

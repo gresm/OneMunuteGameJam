@@ -72,11 +72,14 @@ current_difficulty = 0
 
 difficulty_info = {
     0: (10, "menu"),
-    1: (50, "easy"),
+    1: (40, "easy"),
     2: (25, "normal"),
     3: (10, "hard"),
     4: (5, "insane")
 }
+
+
+exception = None
 
 
 def get_difficulty_operation_steps():
@@ -114,7 +117,7 @@ def next_level():
     solved_levels[str(current_level_index)] = True
     save_json("solved_levels", solved_levels)
     current_level_index += 1
-    if levels >= current_level_index:
+    if current_level_index >= levels:
         menu = True
         current_menu = 0
     else:
@@ -133,7 +136,10 @@ try:
                     if not menu:
                         level.building = False
                 elif ev.unicode == "r":
-                    if not menu:
+                    if menu:
+                        level.pool.generate_mesh()
+                        level.kill.generate_mesh()
+                    else:
                         set_level(f"level_{current_level_index}")
                         start_level()
                 elif ev.key == pg.K_ESCAPE or ev.unicode == "q":
@@ -353,7 +359,11 @@ try:
         pg.display.update()
 
         clock.tick(fps)
+except Exception as e:
+    exception = e
 finally:
     save_json("solved_levels", solved_levels)
     pg.quit()
+    if exception:
+        raise exception
     quit()
