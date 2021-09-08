@@ -1,8 +1,6 @@
 from typing import Iterable, Tuple, Union
-
-import math
 import pygame as pg
-import math as m
+import math as mh
 
 _POS = Union[Tuple[int, int], pg.Vector2]
 
@@ -55,7 +53,7 @@ class Player(pg.sprite.Sprite):
 
                 end_pos += fixed_serialized
                 end_vel += fixed_serialized
-                end_vel += pg.Vector2(math.copysign(30, end_vel.x), -30)
+                end_vel += pg.Vector2(mh.copysign(30, end_vel.x), -30)
                 end_vel *= self.floor_angular_drag
                 self.rect.center = self.pos + end_pos
 
