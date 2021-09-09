@@ -53,7 +53,9 @@ class Player(pg.sprite.Sprite):
 
                 end_pos += fixed_serialized
                 end_vel += fixed_serialized
-                end_vel += pg.Vector2(mh.copysign(30, end_vel.x), -30)
+                end_vel -= pg.Vector2(y=20)
+                if abs(self.vel.x) > 5:
+                    end_vel += pg.Vector2(x=mh.copysign(15, end_vel.x))
                 end_vel *= self.floor_angular_drag
                 self.rect.center = self.pos + end_pos
 
