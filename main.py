@@ -44,7 +44,7 @@ level_names = {
     6: "level 6: falling meteors",
     7: "level 7: tall climb",
     8: "level 8: parkour",
-    9: "level 9: boss fight"
+    9: "level 9: last levels"
 }
 
 level: LevelGenerated = ...

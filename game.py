@@ -50,9 +50,11 @@ class LevelGenerated(pg.sprite.Sprite):
         self.camera_box = pg.Rect(player_follow_camera_size, player_follow_camera_size,
                                   self.rect.width - player_follow_camera_size * 2,
                                   self.rect.height - player_follow_camera_size * 2)
+        self.camera_center = pg.Vector2(self.camera_box.center)
 
         self.operation_steps: int = operation_steps
         self.selecting: Optional[pg.Vector2] = None
+        self.focus_camera_on(self.spawn)
 
     def _draw_on_surf(self, surf: pg.Surface, offset: pg.Vector2):
         if self.building:
@@ -108,6 +110,9 @@ class LevelGenerated(pg.sprite.Sprite):
 
         way = self.player.pos - self.camera - pg.Vector2(self.camera_box.center)
         self.camera += way * self.camera_speed
+
+    def focus_camera_on(self, pos: pg.Vector2):
+        self.camera = pos - self.camera_center
 
     def restart(self):
         self.pool.generate_mesh()

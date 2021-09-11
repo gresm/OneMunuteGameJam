@@ -34,6 +34,7 @@ def round_tuple(tup: Tuple[int, int]):
 
 def get_level(name: str):
     global shape, kill_shape
+    # noinspection PyShadowingNames
     loaded_level = load_level(name)
     shape = GravityPool.deserialize(loaded_level.base_shape)
     shape.generate_mesh()
@@ -108,6 +109,18 @@ while not done:
                     kill_shape.generate_mesh()
                 elif ev.unicode == "k":
                     drawing_death = not drawing_death
+                elif ev.unicode == "l":
+                    level_name = input("level name: ")
+
+                    if not level_name:
+                        continue
+
+                    loaded_level = load_level(level_name)
+                    shape = GravityPool.deserialize(loaded_level.base_shape)
+                    shape.generate_mesh()
+
+                    kill_shape = GravityPool.deserialize(loaded_level.kill_shape)
+                    kill_shape.generate_mesh()
                 elif ev.unicode == "s":
                     pg.quit()
                     level_name = input("level name: ")
